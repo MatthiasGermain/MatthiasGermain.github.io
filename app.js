@@ -6,9 +6,18 @@ function toggleTranspositionOptions() {
     const tonaliteSection = document.getElementById('tonalite-section');
     const option = document.querySelector('input[name="transposition_option"]:checked').value;
     
-    demiTonSection.style.display = option === 'demi-ton' ? 'block' : 'none';
-    tonaliteSection.style.display = option === 'tonalite' ? 'block' : 'none';
+    if (option === 'demi-ton') {
+        demiTonSection.style.display = 'block';
+        tonaliteSection.style.display = 'none';
+        // Réinitialise les champs de tonalité
+        document.getElementById("tonalite_origine").value = "";
+        document.getElementById("tonalite_cible").value = "";
+    } else {
+        demiTonSection.style.display = 'none';
+        tonaliteSection.style.display = 'block';
+    }
 }
+
 
 function nettoyerAccord(accord) {
     return accord.replace("#b", "").replace("b#", "");
@@ -39,33 +48,48 @@ function calculerDemiTons(tonaliteOrigine, tonaliteCible) {
 }
 
 function processTransposition() {
-    const accordsInput = document.getElementById("accords").value;
-    const accords = accordsInput.split(",");
-    const option = document.querySelector('input[name="transposition_option"]:checked').value;
-    let k = 0;
+    const resultDiv = document.getElementById("results");
+    resultDiv.innerHTML = `<p>Chargement en cours...</p>`;  // Ajout du message de chargement
 
-    try {
-        if (option === 'demi-ton') {
-            k = parseInt(document.getElementById("transposition").value);
-            if (isNaN(k)) throw new Error("Veuillez entrer un nombre de demi-tons valide.");
-        } else {
-            const origine = document.getElementById("tonalite_origine").value.trim();
-            const cible = document.getElementById("tonalite_cible").value.trim();
-            if (!origine || !cible) throw new Error("Veuillez entrer les tonalités d'origine et de destination.");
-            k = calculerDemiTons(origine, cible);
+    setTimeout(() => {
+        const accordsInput = document.getElementById("accords").value;
+        const accords = accordsInput.split(",");
+        const option = document.querySelector('input[name="transposition_option"]:checked').value;
+        let k = 0;
+
+        try {
+            if (option === 'demi-ton') {
+                k = parseInt(document.getElementById("transposition").value);
+                if (isNaN(k)) throw new Error("Veuillez entrer un nombre de demi-tons valide.");
+            } else {
+                const origine = document.getElementById("tonalite_origine").value.trim();
+                const cible = document.getElementById("tonalite_cible").value.trim();
+                if (!origine || !cible) throw new Error("Veuillez entrer les tonalités d'origine et de destination.");
+                k = calculerDemiTons(origine, cible);
+            }
+
+            const transposedChords = accords.map(accord => transposerAccord(accord.trim(), k));
+            displayResults(transposedChords, k);
+        } catch (error) {
+            alert(error.message);
         }
-
-        const transposedChords = accords.map(accord => transposerAccord(accord.trim(), k));
-        displayResults(transposedChords, k);
-    } catch (error) {
-        alert(error.message);
-    }
+    }, 300);  // Délai pour simuler le temps de calcul
 }
+
 
 function displayResults(transposedChords, k) {
     const resultDiv = document.getElementById("results");
     resultDiv.innerHTML = `
         <h2>Accords Transposés : ${transposedChords.join(", ")}</h2>
         <h3>Position de capo : fret ${12 - (k % 12)}</h3>
+        <div class="chord-diagrams">
+            ${transposedChords.map(accord => `
+                <div class="chord">
+                    <p>${accord}</p>
+                    <img src="chord_images/${accord}.png" alt="Diagramme de ${accord}">
+                </div>
+            `).join('')}
+        </div>
     `;
 }
+
