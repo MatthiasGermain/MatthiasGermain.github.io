@@ -9,7 +9,6 @@ function toggleTranspositionOptions() {
     if (option === 'demi-ton') {
         demiTonSection.style.display = 'block';
         tonaliteSection.style.display = 'none';
-        // Réinitialise les champs de tonalité
         document.getElementById("tonalite_origine").value = "";
         document.getElementById("tonalite_cible").value = "";
     } else {
@@ -17,7 +16,6 @@ function toggleTranspositionOptions() {
         tonaliteSection.style.display = 'block';
     }
 }
-
 
 function nettoyerAccord(accord) {
     return accord.replace("#b", "").replace("b#", "");
@@ -36,8 +34,12 @@ function transposerAccord(accord, k) {
     }
 
     baseNote = equivalents[baseNote] || baseNote;
-    const indexNote = notes.indexOf(baseNote);
-    const newNote = notes[(indexNote + k) % notes.length];
+    let indexNote = notes.indexOf(baseNote);
+
+    // Calcul de la nouvelle note avec gestion des indices négatifs
+    const newIndex = (indexNote + k + notes.length) % notes.length;
+    const newNote = notes[newIndex];
+    
     return nettoyerAccord(newNote + suffixe);
 }
 
@@ -49,7 +51,7 @@ function calculerDemiTons(tonaliteOrigine, tonaliteCible) {
 
 function processTransposition() {
     const resultDiv = document.getElementById("results");
-    resultDiv.innerHTML = `<p>Chargement en cours...</p>`;  // Ajout du message de chargement
+    resultDiv.innerHTML = `<p>Chargement en cours...</p>`;
 
     setTimeout(() => {
         const accordsInput = document.getElementById("accords").value;
@@ -73,15 +75,15 @@ function processTransposition() {
         } catch (error) {
             alert(error.message);
         }
-    }, 300);  // Délai pour simuler le temps de calcul
+    }, 300);
 }
 
-
 function displayResults(transposedChords, k) {
+    const normalizedK = (k % 12 + 12) % 12;  // Normalisation de k pour le calcul de la position de capo
     const resultDiv = document.getElementById("results");
     resultDiv.innerHTML = `
         <h2>Accords Transposés : ${transposedChords.join(", ")}</h2>
-        <h3>Position de capo : fret ${12 - (k % 12)}</h3>
+        <h3>Position de capo : fret ${12 - normalizedK}</h3>
         <div class="chord-diagrams">
             ${transposedChords.map(accord => `
                 <div class="chord">
@@ -92,4 +94,3 @@ function displayResults(transposedChords, k) {
         </div>
     `;
 }
-
